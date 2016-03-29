@@ -1,0 +1,39 @@
+HEADER CHUNK:
+4d 54 68 64 // "MThd" (chunk ID)
+00 00 00 06 // 6 (chunk size — 6 bytes following in header data)
+00 01 // 1 (format type)
+      // 0 = 1 track chunk
+      // 1 = 2 or more track chunks ( convention: first track has meta  events, rest have note information)
+      // 2 = 2 or more tracks (may be  simultaneous, may not, and any may  contain meta events)
+00 01 // 1 (number of tracks)
+00 80 // (time division)
+      // if first bit is 0, then this is ticks per beat. If 1, then the next 7 bits are frames per second (24, 25, 29.97 (represented as 29), or 30), and the next 8 bits describe the ticks per frame.
+
+
+TRACK CHUNK:
+4d 54 72 6b // "MTrk" (chunk ID)
+00 00 00 32 // 32 (chunk size)
+
+00 ff   // meta message at time 0
+03      // meta type (03 = track name)
+08      // length (chars cause title)
+4d 79 20 54 72 61 63 6b // data! ("My Track")
+
+00 90 3c 64 // "note on" event:
+            // 00 is when it occurs
+            // 90 means "note on"
+            // 0x3c is 60 which is C3
+            // 0x64 is 100 velocity
+
+00 ff
+51      // set tempo
+03      // length (remaining bytes)
+09 27 c0    // evaluates to 600,000, which is the number of microseconds to the quarter. Since there are 60,000,000 microseconds to the minute, quarter is 100 bpm
+
+// this 81 00 is very disturbing, but calm down. 0x81 is 10000001. the leading 1 is telling the compiler to look for a second byte after the first, thus we end with binary 100000000, which is 256 in decimal.
+81 00 80 3c 64 // "note off" at time 81
+
+00 90 3e 4b 81 00 80 3e 4b 00 90 40 32 81
+00 80 40 32 00 ff 2f 00 
+
+
