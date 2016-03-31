@@ -87,13 +87,21 @@ def adjust_rhythms(notes, quarter_ticks):
     return updated_note_messages
 
 
-def sort_and_recompile(mido_f, updated_messages, track_i):
-    """ Sorts the updated_messages list by absolute time, and secondarily
-        message type (this fixes an issue with sixteenths starting before
-        dotted eighths end). The .time attribute is converted back to time
-        delta in ticks, and the messages are written to the original track.
+def sort_and_recompile(track, updated_messages):
+    """ Sorts the updated_messages list by absolute time, then the .time
+        attribute is converted back to time delta in ticks, and the messages
+        are written to the original track.
     """
-    messages = sorted(updated_messages, key=lambda x: (x.time, x.type))
+    sort_priority = {
+        "note_off": 1,
+        "note_on": 2,
+        "end_of_track": 3
+    }
+    # sort by time, prioritizing non-note information, then note information,
+    # and making sure that end_of_track comes last when it shares a time stamp
+    # with another mess
+    messages = sorted(
+        updated_messages, key=lambda x: (x.time, sort_priority.get(x.type, 0)))
 
     current_tick = 0
     for message in messages:
@@ -101,7 +109,7 @@ def sort_and_recompile(mido_f, updated_messages, track_i):
         current_tick += message.time
 
     for message in messages:
-        mido_f.tracks[track_i].append(message)
+        track.append(message)
 
 
 mido_f = mido.MidiFile(midi_source)
@@ -110,7 +118,7 @@ for track_i, track in enumerate(mido_f.tracks):
     print("Track {}: {}".format(track_i, track.name or "Meta Information"))
     notes, updated_messages = pop_notes_list(track)
     updated_messages += adjust_rhythms(notes, mido_f.ticks_per_beat)
-    sort_and_recompile(mido_f, updated_messages, track_i)
+    sort_and_recompile(track, updated_messages)
 
 # save the edited file, and print a short report if the script was run
 # from the terminal
